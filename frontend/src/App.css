@@ -1,0 +1,58 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  border-radius: 15px;
+}
+
+.upload {
+  margin-bottom: 5px;
+  display: flex;
+}
+
+.camera {
+  margin-left: 100px;
+  margin-bottom: 45px;
+}
+
+.btn_capture {
+  margin: 5px, 5px;
+}
+.btn_close_camera {
+  margin: 5px, 5px;
+}
+
+.lang {
+  margin-bottom: 20px;
+  border-bottom: 2px solid black;
+  padding-bottom:25px;
+}
+
+.lang select {
+  padding: 10px;
+  background: #262569;
+  border-radius: 10px;
+  width: 20%;
+}
+
+.voice {
+  width: 100%;
+}
+
+.said {
+  margin-bottom: 45px;
+  border-bottom: 2px solid black;
+  padding-bottom: 25px;
+}
+
+.submit {
+  width: 100%;
+  background: #081a58;
+}
+.submit:hover {
+  background: #182e7e;
+}
