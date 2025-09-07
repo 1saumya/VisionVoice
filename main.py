@@ -208,4 +208,5 @@ async def get_audio(filename: str):
 if not os.path.exists("static"):
     os.makedirs("static")
 
-app.mount("/", StaticFiles(directory="../frontend/build", html=True), name="frontend")
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="static")
+
