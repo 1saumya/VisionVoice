@@ -34,6 +34,9 @@ export default function App() {
       else if(text.includes("note") || text.includes("paisa")) {
         setCurrentMode("rupee")
       }
+      else if(text.includes("colour") || text.includes("shade")) {
+        setCurrentMode("colour")
+      }
       else {
         alert("Say 'mood' for face recognition OR 'image' for captioning");
       }
@@ -80,7 +83,8 @@ export default function App() {
     let endpoint = "";
     if (currentMode === "face") endpoint = "/recognize";
     else if (currentMode === "image") endpoint = "/predict";
-    else endpoint = "/rupee"
+    else if (currentMode === "rupee") endpoint = "/rupee"
+    else endpoint = "/colour"
 
     try {
       setLoading(true);
@@ -89,10 +93,12 @@ export default function App() {
         body: formData,
       });
       const data = await res.json();
-
-      setResult(data.caption || data.extracted_text);
+      
+      setResult(data.caption);
       setAudioUrl(data.audio_url);
-    } catch (err) {
+
+    } 
+    catch (err) {
       console.error(err);
       setResult("Error calling API");
     }

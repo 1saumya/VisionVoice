@@ -8,6 +8,9 @@ from torchvision import models
 from torchvision import transforms
 from PIL import Image
 from gtts import gTTS
+from sklearn.cluster import KMeans
+import numpy as np
+import webcolors
 import os
 import uuid
 from transformers import (
@@ -69,6 +72,42 @@ state_dict = torch.load("model_weights.pth", map_location = torch.device("cpu"))
 model_curr.load_state_dict(state_dict)
 model_curr = model_curr.to(device)
 model_curr.eval()
+
+#for color Kmeans clustering
+def get_dominant_color(image_path, k=3):
+    image = Image.open(image_path).convert("RGB")
+    image = image.resize((150, 150))
+    arr = np.array(image).reshape(-1, 3)
+    
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(arr)
+    colors = kmeans.cluster_centers_
+    counts = np.bincount(kmeans.labels_)
+    dominant_color = colors[counts.argmax()]
+    
+    return "#{:02x}{:02x}{:02x}".format(int(dominant_color[0]), int(dominant_color[1]), int(dominant_color[2]))
+
+
+#for closest color name
+def closest_color(requested_hex):
+    try:
+        return webcolors.hex_to_name(requested_hex) 
+    except ValueError:
+        requested_rgb = webcolors.hex_to_rgb(requested_hex)
+        min_dist = float("inf")
+        closest_name = None
+
+        for name in webcolors.names('css3'):
+            hex_code = webcolors.name_to_hex(name)
+            r_c, g_c, b_c = webcolors.hex_to_rgb(hex_code)
+            dist = (r_c - requested_rgb[0])**2 + (g_c - requested_rgb[1])**2 + (b_c - requested_rgb[2])**2
+            if dist < min_dist:
+                min_dist = dist
+                closest_name = name
+
+        return closest_name
+
+    
 
 # Translator
 translator = pipeline("translation_en_to_hi", model="Helsinki-NLP/opus-mt-en-hi")
@@ -170,6 +209,39 @@ async def rupee(file : UploadFile = File(...), language : str = Form("en")):
     except Exception as e:
 
         return JSONResponse(content = {"error" : str(e)}, status_code = 500)
+
+
+# for color detecting
+@app.post("/colour")
+async def color(file: UploadFile = File(...), language : str = Form("en")):
+    try:
+        filepath = f"temp_{file.filename}"
+        with open(filepath, "wb") as f:
+            f.write(await file.read())
+        
+        dominant_color = get_dominant_color(filepath)
+        res = closest_color(dominant_color)
+        
+        # Translate if Hindi
+        if language == "hi":
+            res_color = translator(res, max_length=15)
+            caption = res_color[0]["translation_text"]
+            tts = gTTS(caption, lang = "hi")
+        else:
+            caption = res
+            tts = gTTS(caption, lang = "en")
+        
+        filename = f"audio_{uuid.uuid4().hex}.mp3"
+        filepath = os.path.join("static", filename)
+        tts.save(filepath)
+        audio_url = f"http://127.0.0.1:8000/static/{filename}"
+
+        # 👈 return uniform caption key
+        return {"caption": caption, "audio_url": audio_url}
+
+    except Exception as e:
+        return {"error": str(e)}
+
 
 
 @app.get("/get-audio/{filename}")
