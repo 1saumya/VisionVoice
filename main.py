@@ -204,9 +204,12 @@ async def get_audio(filename: str):
         return FileResponse(filepath, media_type="audio/mpeg", filename=filename)
     return JSONResponse(content={"error": "File not found"}, status_code=404)
 
-# Create static folder
+
 if not os.path.exists("static"):
     os.makedirs("static")
 
-app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="static")
+app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
 
+@app.get("/{full_path:path}")
+async def serve_react(full_path: str):
+    return FileResponse("frontend/dist/index.html")
